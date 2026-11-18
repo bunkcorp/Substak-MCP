@@ -30,6 +30,16 @@ For local development from the repository, use:
 ./venv/bin/python setup_auth.py
 ```
 
+### Browser choice (Playwright)
+
+Setup launches **Chromium** by default. To use Playwright **WebKit** (Safari's
+engine, not Safari.app) or Firefox instead:
+
+```bash
+export SUBSTACK_MCP_BROWSER=webkit   # or safari, firefox, chromium, chrome
+./venv/bin/python setup_auth.py
+```
+
 ### Authentication Methods
 
 #### 🔗 Magic Link (Email Code)
