@@ -161,11 +161,29 @@ class SubstackAuthSetup:
         # Handle custom domains
         return domain.split(".")[0]
 
+    def _launch_browser(self, playwright):
+        """Launch a visible browser for CAPTCHA/login.
+
+        Default remains Chromium for compatibility. Override with
+        SUBSTACK_MCP_BROWSER=webkit|safari|firefox|chromium|chrome.
+        Playwright WebKit is Safari's engine, not Safari.app.
+        """
+        choice = (os.environ.get("SUBSTACK_MCP_BROWSER") or "chromium").strip().lower()
+        if choice in {"webkit", "safari"}:
+            print("Launching WebKit / Safari engine (Playwright)...")
+            print("Note: this is Safari's engine, not Safari.app itself.")
+            return playwright.webkit.launch(headless=False)
+        if choice in {"firefox"}:
+            print("Launching Firefox (Playwright)...")
+            return playwright.firefox.launch(headless=False)
+        print("Launching Chromium (Playwright)...")
+        return playwright.chromium.launch(headless=False)
+
     async def _authenticate_with_browser(self) -> Optional[Dict[str, str]]:
         """Perform browser-based authentication and extract session cookies."""
         async with async_playwright() as p:
             # Launch browser (visible so user can solve CAPTCHA)
-            browser = await p.chromium.launch(headless=False)
+            browser = await self._launch_browser(p)
             context = await browser.new_context()
             page = await context.new_page()
 
@@ -424,8 +442,15 @@ if __name__ == "__main__":
         # Install playwright browsers if needed
         import subprocess
 
+        browser_choice = (os.environ.get("SUBSTACK_MCP_BROWSER") or "chromium").strip().lower()
+        if browser_choice in {"webkit", "safari"}:
+            browser_pkg = "webkit"
+        elif browser_choice == "firefox":
+            browser_pkg = "firefox"
+        else:
+            browser_pkg = "chromium"
         subprocess.run(
-            [sys.executable, "-m", "playwright", "install", "chromium"], check=False
+            [sys.executable, "-m", "playwright", "install", browser_pkg], check=False
         )
 
         # Run the setup
